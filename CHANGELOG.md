@@ -1,5 +1,12 @@
 # Changelog
 
+## 0.2.0-beta.2
+
+- README branding: original DevBar artwork, a custom banner, and previews rendered from the actual SwiftUI device and tools screens.
+- Native multi-resolution macOS app icon included in the signed release bundle.
+- Custom phone-and-terminal menu bar glyph that adapts to light and dark menu bars.
+- Reproducible icon and documentation image generation; preview capture is debug-only.
+
 ## 0.2.0-beta.1
 
 First public beta.

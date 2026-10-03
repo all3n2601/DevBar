@@ -1,4 +1,9 @@
-# DevBar
+<p align="center">
+  <img src="docs/assets/devbar-logo.jpg" alt="DevBar app icon" width="112" />
+</p>
+<h1 align="center">DevBar</h1>
+
+![DevBar — your simulators, one menu bar](docs/assets/banner.png)
 
 [![CI](https://github.com/all3n2601/DevBar/actions/workflows/ci.yml/badge.svg)](https://github.com/all3n2601/DevBar/actions/workflows/ci.yml)
 [![Release](https://img.shields.io/github/v/release/all3n2601/DevBar?include_prereleases)](https://github.com/all3n2601/DevBar/releases)
@@ -8,9 +13,18 @@ A macOS menu bar companion for mobile developers. Boot a simulator, install your
 
 **Public beta · macOS 14+ · Apple Silicon and Intel · Swift · no third-party runtime dependencies.**
 
+## Interface
+
+<p align="center">
+  <img src="docs/assets/devices.png" alt="DevBar device list with iOS and Android controls" width="350" />
+  <img src="docs/assets/tools.png" alt="DevBar tools with appearance controls and deep links" width="350" />
+</p>
+
+*Rendered from DevBar’s actual SwiftUI interface using demo devices. Names and running states are illustrative.*
+
 ## Install
 
-Download the app ZIP from [Releases](https://github.com/all3n2601/DevBar/releases), unzip it, and move **DevBar.app** to Applications. Launch it and look for the sliders icon in the menu bar. **Option + Shift + D** opens the command deck.
+Download the app ZIP from [Releases](https://github.com/all3n2601/DevBar/releases), unzip it, and move **DevBar.app** to Applications. Launch it and look for the phone-and-terminal icon in the menu bar. **Option + Shift + D** opens the command deck.
 
 Beta downloads are ad-hoc signed, **not Apple Developer ID signed or notarized**. macOS may block first launch. After verifying the download and its source, use **System Settings → Privacy & Security → Open Anyway** if available. You can also build from source. Do not disable Gatekeeper globally.
 
@@ -29,7 +43,7 @@ To use the CLI, extract its archive and put the executable in a directory on you
 To verify downloaded archives, place them beside the checksum file and run:
 
 ```sh
-shasum -a 256 -c DevBar-0.2.0-beta.1-SHA256SUMS.txt
+shasum -a 256 -c DevBar-0.2.0-beta.2-SHA256SUMS.txt
 ```
 
 ## Requirements
@@ -174,6 +188,14 @@ scripts/            Packaging and executable smoke checks
 .github/workflows/  CI and tag-triggered GitHub Releases
 website/            Separate marketing website (not bundled in releases)
 ```
+
+To regenerate the app icon from the original artwork, run `scripts/generate-icon.sh`. Regenerate the banner with `swift scripts/render-banner.swift docs/assets/banner.svg docs/assets/banner.png`. For interface previews, build in debug mode and run:
+
+```sh
+"$(swift build --show-bin-path)/DevBar" --capture-docs "$PWD/docs/assets"
+```
+
+This renders the interface with demo data without booting or changing devices. The capture command is excluded from release builds.
 
 ## Releases and contributions
 

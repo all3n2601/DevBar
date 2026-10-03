@@ -22,8 +22,7 @@ public class AppDelegate: NSObject, NSApplicationDelegate {
         self.statusBarItem = NSStatusBar.system.statusItem(withLength: NSStatusItem.variableLength)
 
         if let button = self.statusBarItem.button {
-            // Elegant developer tool symbol
-            button.image = NSImage(systemSymbolName: "slider.horizontal.3", accessibilityDescription: "DevBar")
+            button.image = Self.menuBarIcon()
             button.action = #selector(togglePopover(_:))
             button.target = self
         }
@@ -32,6 +31,29 @@ public class AppDelegate: NSObject, NSApplicationDelegate {
         ShortcutManager.shared.registerShortcut { [weak self] in
             self?.togglePopover(nil)
         }
+    }
+
+    private static func menuBarIcon() -> NSImage {
+        let image = NSImage(size: NSSize(width: 20, height: 20), flipped: false) { _ in
+            NSColor.black.setStroke()
+            let phone = NSBezierPath(roundedRect: NSRect(x: 4, y: 1, width: 12, height: 18), xRadius: 2.5, yRadius: 2.5)
+            phone.lineWidth = 1.5
+            phone.stroke()
+            let terminal = NSBezierPath()
+            terminal.move(to: NSPoint(x: 7, y: 12))
+            terminal.line(to: NSPoint(x: 10, y: 10))
+            terminal.line(to: NSPoint(x: 7, y: 8))
+            terminal.move(to: NSPoint(x: 11, y: 8))
+            terminal.line(to: NSPoint(x: 13, y: 8))
+            terminal.lineWidth = 1.5
+            terminal.lineCapStyle = .round
+            terminal.lineJoinStyle = .round
+            terminal.stroke()
+            return true
+        }
+        image.isTemplate = true
+        image.accessibilityDescription = "DevBar"
+        return image
     }
 
     public func applicationWillTerminate(_ notification: Notification) {

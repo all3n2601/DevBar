@@ -4,6 +4,11 @@ import SwiftUI
 struct MainView: View {
     @ObservedObject var manager: DeviceManager
 
+    init(manager: DeviceManager, initialTab: AppTab = .devices) {
+        self.manager = manager
+        _activeTab = State(initialValue: initialTab)
+    }
+
     // Custom workspace tab state routing
     @State private var activeTab: AppTab = .devices
 
