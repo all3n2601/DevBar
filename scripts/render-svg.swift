@@ -6,11 +6,15 @@ app.setActivationPolicy(.accessory)
 let source = URL(fileURLWithPath: CommandLine.arguments[1])
 let output = URL(fileURLWithPath: CommandLine.arguments[2])
 let svg = try String(contentsOf: source, encoding: .utf8)
-let web = WKWebView(frame: NSRect(x: 0, y: 0, width: 1200, height: 380))
+let root = try XMLDocument(xmlString: svg).rootElement()!
+let width = Double(root.attribute(forName: "width")!.stringValue!)!
+let height = Double(root.attribute(forName: "height")!.stringValue!)!
+let web = WKWebView(frame: NSRect(x: 0, y: 0, width: width, height: height))
+web.setValue(false, forKey: "drawsBackground")
 let window = NSWindow(contentRect: web.frame, styleMask: .borderless, backing: .buffered, defer: false)
 window.contentView = web
 window.orderFront(nil)
-web.loadHTMLString("<html><head><style>html,body{margin:0;width:1200px;height:380px;background:transparent}svg{display:block}</style></head><body>\(svg)</body></html>", baseURL: source.deletingLastPathComponent())
+web.loadHTMLString("<html><head><style>html,body{margin:0;width:\(width)px;height:\(height)px;background:transparent}svg{display:block}</style></head><body>\(svg)</body></html>", baseURL: source.deletingLastPathComponent())
 let deadline = Date().addingTimeInterval(15)
 while web.isLoading && Date() < deadline { RunLoop.current.run(until: Date().addingTimeInterval(0.05)) }
 RunLoop.current.run(until: Date().addingTimeInterval(0.5))
@@ -18,7 +22,7 @@ var finished = false
 var failure: Error?
 let configuration = WKSnapshotConfiguration()
 configuration.rect = web.bounds
-configuration.snapshotWidth = 1200
+configuration.snapshotWidth = NSNumber(value: width / window.backingScaleFactor)
 web.takeSnapshot(with: configuration) { image, error in
     do {
         if let error = error { throw error }
@@ -30,4 +34,4 @@ web.takeSnapshot(with: configuration) { image, error in
 }
 while !finished && Date() < deadline { RunLoop.current.run(until: Date().addingTimeInterval(0.05)) }
 window.orderOut(nil)
-if !finished || failure != nil { fputs("Banner rendering failed: \(String(describing: failure))\n", stderr); exit(1) }
+if !finished || failure != nil { fputs("SVG rendering failed: \(String(describing: failure))\n", stderr); exit(1) }

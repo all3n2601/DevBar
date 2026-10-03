@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.2.0-beta.3
+
+- Replaced the detailed illustrated icon with an original, scalable phone-and-terminal vector mark.
+- Updated the app icon, README, and marketing artwork to the same clean cyan/violet design with transparent corners.
+- Generalized the SVG rendering script for both logo and banner assets.
+
 ## 0.2.0-beta.2
 
 - README branding: original DevBar artwork, a custom banner, and previews rendered from the actual SwiftUI device and tools screens.

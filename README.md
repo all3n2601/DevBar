@@ -1,5 +1,5 @@
 <p align="center">
-  <img src="docs/assets/devbar-logo.jpg" alt="DevBar app icon" width="112" />
+  <img src="docs/assets/devbar-logo.png" alt="DevBar app icon" width="112" />
 </p>
 <h1 align="center">DevBar</h1>
 
@@ -43,7 +43,7 @@ To use the CLI, extract its archive and put the executable in a directory on you
 To verify downloaded archives, place them beside the checksum file and run:
 
 ```sh
-shasum -a 256 -c DevBar-0.2.0-beta.2-SHA256SUMS.txt
+shasum -a 256 -c DevBar-0.2.0-beta.3-SHA256SUMS.txt
 ```
 
 ## Requirements
@@ -189,7 +189,7 @@ scripts/            Packaging and executable smoke checks
 website/            Separate marketing website (not bundled in releases)
 ```
 
-To regenerate the app icon from the original artwork, run `scripts/generate-icon.sh`. Regenerate the banner with `swift scripts/render-banner.swift docs/assets/banner.svg docs/assets/banner.png`. For interface previews, build in debug mode and run:
+To regenerate the app icon from the vector logo, run `scripts/generate-icon.sh`. Render the vector logo with `swift scripts/render-svg.swift docs/assets/devbar-logo.svg docs/assets/devbar-logo.png`. Regenerate the banner with `swift scripts/render-svg.swift docs/assets/banner.svg docs/assets/banner.png`. For interface previews, build in debug mode and run:
 
 ```sh
 "$(swift build --show-bin-path)/DevBar" --capture-docs "$PWD/docs/assets"
