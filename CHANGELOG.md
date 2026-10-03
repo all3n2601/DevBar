@@ -1,0 +1,19 @@
+# Changelog
+
+## 0.2.0-beta.1
+
+First public beta.
+
+- Shared device operations for CLI, MCP, and the menu bar's boot, shutdown, installation, screenshot, and GPS workflows.
+- Bounded subprocess execution with file-backed stdout/stderr capture to prevent pipe deadlocks.
+- Readiness-based boot, real exit statuses, ambiguous-name rejection, validated GPS coordinates, and targeted MCP location control.
+- CLI doctor, JSON output, installation, app launch, deep links, and location commands.
+- Nine MCP tools; request validation, notification handling, clean stdio, and tool failure reporting.
+- Portable configuration and screenshot paths; corrected iOS screenshot and GPS command arguments.
+- Persistent favorites and device ID copying; visible GUI boot/shutdown errors; tool diagnostics and targeted app launch/deep-link controls.
+- Physical Android safeguards, simulator-only iOS builds, explicit Android FCM limitation, and bounded recording stop.
+- Regression tests, executable smoke checks, universal macOS app/CLI packaging, checksums, and GitHub CI/release workflows.
+
+Known limitations: unnotarized app, hardware validation still required, experimental private storage editing, and Android recording duration limits. See README.
+
+Validation: 14 regression tests, CLI/MCP executable smoke checks, universal package/signature checks, and a local iOS 26.5 simulator run covering boot, Settings app launch, deep link, GPS, PNG capture, and shutdown. Physical Android and Intel execution remain unverified. Automated GUI inspection was unavailable in the development environment.

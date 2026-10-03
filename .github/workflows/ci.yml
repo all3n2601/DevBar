@@ -1,0 +1,29 @@
+name: CI
+on:
+  push:
+    branches: [main]
+  pull_request:
+permissions:
+  contents: read
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+jobs:
+  verify:
+    runs-on: macos-15
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - name: Build and test
+        run: swift test
+      - name: Test CLI and stdio protocol
+        run: python3 scripts/smoke-test.py "$(swift build --show-bin-path)/DevBar"
+      - name: Build and verify universal release packages
+        run: scripts/package-release.sh
+        env:
+          GITHUB_REF_NAME: ''
+      - uses: actions/upload-artifact@v4
+        with:
+          name: macos-universal
+          path: dist/*
+          if-no-files-found: error

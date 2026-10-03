@@ -1,0 +1,22 @@
+name: Bug report
+description: Report a reproducible DevBar problem
+body:
+  - type: textarea
+    id: environment
+    attributes:
+      label: Setup
+      description: DevBar, macOS, Xcode, and Android SDK versions; relevant cli doctor output. Remove private device details.
+    validations:
+      required: true
+  - type: textarea
+    id: reproduce
+    attributes:
+      label: Steps to reproduce
+    validations:
+      required: true
+  - type: textarea
+    id: expected
+    attributes:
+      label: Expected and actual behavior
+    validations:
+      required: true
