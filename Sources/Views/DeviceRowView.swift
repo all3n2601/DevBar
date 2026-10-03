@@ -6,6 +6,7 @@ struct DeviceRowView: View {
     @ObservedObject var manager: DeviceManager
 
     @AppStorage("favoriteDeviceIDs") private var favorites = ""
+    @State private var confirmingErase = false
     @State private var actionEditor: String?
     @State private var actionValue = ""
     @State private var showingActionEditor = false
@@ -119,6 +120,10 @@ struct DeviceRowView: View {
                 }
             }
         )
+        .confirmationDialog("Erase \(device.name)?", isPresented: $confirmingErase, titleVisibility: .visible) {
+            Button("Erase All Simulator Data", role: .destructive) { manager.wipeDevice(device) }
+            Button("Cancel", role: .cancel) {}
+        } message: { Text("This deletes installed apps and all data on this simulator.") }
         .sheet(isPresented: $showingActionEditor) {
             VStack(alignment: .leading, spacing: 12) {
                 Text(actionEditor == "launch" ? "Launch App on \(device.name)" : "Open Link on \(device.name)")
@@ -316,7 +321,8 @@ struct DeviceRowView: View {
                         .frame(width: 24, height: 24)
                 }
                 .buttonStyle(PremiumButtonStyle(isCircular: true))
-                .help("Factory Reset Device")
+                .help("Erase Simulator Data")
+                .disabled(device.platform != .ios || manager.activeRecordings.contains(device.id))
             }
         }
     }
@@ -343,9 +349,7 @@ struct DeviceRowView: View {
     }
 
     private func triggerWipe() {
-        // Confirmation log
-        showRowToast(message: "Initiating deep sanitization...")
-        manager.wipeDevice(device)
+        confirmingErase = true
     }
 
     private func showRowToast(message: String) {

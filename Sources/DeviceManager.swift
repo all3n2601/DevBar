@@ -455,42 +455,23 @@ public class DeviceManager: ObservableObject {
 
     /// Fires target custom URL schemes / deep links across active booted devices.
     public func launchDeeplink(url: String, completion: @escaping (Bool, String) -> Void) {
-        let activeBooted = devices.filter { $0.state == .booted }
-        guard !activeBooted.isEmpty else {
-            completion(false, "No active devices available.")
-            return
-        }
-
-        DispatchQueue.global(qos: .userInitiated).async { [weak self] in
-            guard let self = self else { return }
-            var success = true
-            var errorMsg = ""
-
-            for device in activeBooted {
-                switch device.platform {
-                case .ios:
-                    let result = self.shell.run(executable: "/usr/bin/xcrun", arguments: ["simctl", "openurl", device.id, url])
-                    if result.status == 0 { success = true } else { errorMsg = result.error }
-
-                case .android:
-                    let adbPath = self.shell.resolveAdbPath()
-                    let result = self.shell.run(executable: adbPath, arguments: ["-s", device.id, "shell", "am", "start", "-a", "android.intent.action.VIEW", "-d", DeviceService.remoteQuote(url)])
-                    if result.status == 0 { success = true } else { errorMsg = result.error }
-                }
+        let active = devices.filter { $0.state == .booted }
+        guard !active.isEmpty else { completion(false, "No active devices available."); return }
+        DispatchQueue.global(qos: .userInitiated).async {
+            var errors: [String] = []
+            for device in active {
+                do { try DeviceService().openURL(device, url: url) }
+                catch { errors.append("\(device.name): \(error.localizedDescription)") }
             }
-
-            DispatchQueue.main.async {
-                if success {
-                    completion(true, "Deeplink launched successfully!")
-                } else {
-                    completion(false, "Failed to launch: \(errorMsg.isEmpty ? "Unknown CLI error" : errorMsg)")
-                }
-            }
+            let message = errors.isEmpty ? "Deep link opened on all active devices." : errors.joined(separator: "\n")
+            let success = errors.isEmpty
+            DispatchQueue.main.async { completion(success, message) }
         }
     }
 
     /// Dynamic local plist / XML Preferences loader.
     public func loadStorageKeys(bundleId: String, completion: @escaping ([String: String]?) -> Void) {
+        guard (try? PreferencesEditor.validateBundleID(bundleId)) != nil else { completion(nil); return }
         let activeBooted = devices.filter { $0.state == .booted }
         guard let device = activeBooted.first else {
             completion(nil)
@@ -526,7 +507,8 @@ public class DeviceManager: ObservableObject {
                 let tempDir = FileManager.default.temporaryDirectory.appendingPathComponent("DevBar").path
                 try? FileManager.default.createDirectory(atPath: tempDir, withIntermediateDirectories: true, attributes: nil)
 
-                let localXmlPath = "\(tempDir)/\(bundleId)_prefs.xml"
+                let localXmlPath = "\(tempDir)/\(UUID().uuidString)_prefs.xml"
+                defer { try? FileManager.default.removeItem(atPath: localXmlPath) }
                 let adbPath = self.shell.resolveAdbPath()
 
                 let pullResult = self.shell.run(executable: adbPath, arguments: ["-s", device.id, "pull", "/data/data/\(bundleId)/shared_prefs/\(bundleId)_preferences.xml", localXmlPath])
@@ -552,6 +534,7 @@ public class DeviceManager: ObservableObject {
 
     /// Dynamic local plist / XML Preferences modifier.
     public func saveStorageKey(key: String, value: String, bundleId: String, completion: @escaping (Bool) -> Void) {
+        guard (try? PreferencesEditor.validateBundleID(bundleId)) != nil, !key.isEmpty else { completion(false); return }
         let activeBooted = devices.filter { $0.state == .booted }
         guard let device = activeBooted.first else {
             completion(false)
@@ -570,60 +553,36 @@ public class DeviceManager: ObservableObject {
                 }
 
                 let plistPath = "\(containerResult.output)/Library/Preferences/\(bundleId).plist"
-                let dict = NSMutableDictionary(contentsOfFile: plistPath) ?? NSMutableDictionary()
-                dict.setObject(value, forKey: key as NSCopying)
-
-                let success = dict.write(toFile: plistPath, atomically: true)
-                DispatchQueue.main.async { completion(success) }
+                do {
+                    let data = try Data(contentsOf: URL(fileURLWithPath: plistPath))
+                    let updated = try PreferencesEditor.propertyList(data, key: key, value: value)
+                    try updated.write(to: URL(fileURLWithPath: plistPath), options: .atomic)
+                    DispatchQueue.main.async { completion(true) }
+                } catch { DispatchQueue.main.async { completion(false) } }
 
             case .android:
                 // Android edit: Pull, modify string element in XML, and push back
                 let tempDir = FileManager.default.temporaryDirectory.appendingPathComponent("DevBar").path
                 try? FileManager.default.createDirectory(atPath: tempDir, withIntermediateDirectories: true, attributes: nil)
 
-                let localXmlPath = "\(tempDir)/\(bundleId)_prefs.xml"
+                let localXmlPath = "\(tempDir)/\(UUID().uuidString)_prefs.xml"
+                defer { try? FileManager.default.removeItem(atPath: localXmlPath) }
                 let adbPath = self.shell.resolveAdbPath()
 
                 let pullResult = self.shell.run(executable: adbPath, arguments: ["-s", device.id, "pull", "/data/data/\(bundleId)/shared_prefs/\(bundleId)_preferences.xml", localXmlPath])
 
-                // Read pulled XML
-                var xmlString = ""
-                if pullResult.status == 0,
-                   let existingXml = try? String(contentsOfFile: localXmlPath, encoding: .utf8) {
-                    xmlString = existingXml
-                } else {
-                    xmlString = "<?xml version='1.0' encoding='utf-8' standalone='yes'?>\n<map>\n</map>"
+                guard pullResult.status == 0 else {
+                    DispatchQueue.main.async { completion(false) }
+                    return
                 }
-
-                // Check if key exists inside XML and modify or add it
                 var success = false
-                let keyPattern = "name=\"\(key)\""
-                if xmlString.contains(keyPattern) {
-                    // Regex replacement for target key line (string, boolean, int, etc.)
-                    // Simple replacement for demonstration, standard: replace the XML line
-                    let lines = xmlString.components(separatedBy: .newlines)
-                    var outLines: [String] = []
-                    for line in lines {
-                        if line.contains(keyPattern) {
-                            outLines.append("    <string name=\"\(key)\">\(value)</string>")
-                        } else {
-                            outLines.append(line)
-                        }
-                    }
-                    xmlString = outLines.joined(separator: "\n")
-                } else {
-                    // Inject new string key before closing </map>
-                    xmlString = xmlString.replacingOccurrences(of: "</map>", with: "    <string name=\"\(key)\">\(value)</string>\n</map>")
-                }
-
-                // Write XML back and push
-                if (try? xmlString.write(toFile: localXmlPath, atomically: true, encoding: .utf8)) != nil {
-                    let pushResult = self.shell.run(executable: adbPath, arguments: ["-s", device.id, "push", localXmlPath, "/data/data/\(bundleId)/shared_prefs/\(bundleId)_preferences.xml"])
-                    if pushResult.status == 0 {
-                        success = true
-                    }
-                    try? FileManager.default.removeItem(atPath: localXmlPath)
-                }
+                do {
+                    let data = try Data(contentsOf: URL(fileURLWithPath: localXmlPath))
+                    let updated = try PreferencesEditor.androidXML(data, key: key, value: value)
+                    try updated.write(to: URL(fileURLWithPath: localXmlPath), options: .atomic)
+                    let result = self.shell.run(executable: adbPath, arguments: ["-s", device.id, "push", localXmlPath, "/data/data/\(bundleId)/shared_prefs/\(bundleId)_preferences.xml"])
+                    success = result.status == 0
+                } catch { success = false }
 
                 DispatchQueue.main.async { completion(success) }
             }

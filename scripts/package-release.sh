@@ -10,7 +10,7 @@ if ! /usr/bin/grep -Fq "\"$version\"" Sources/Core/Version.swift; then
   echo 'VERSION and Sources/Core/Version.swift disagree.' >&2
   exit 1
 fi
-if [[ -n "${GITHUB_REF_NAME:-}" && "$GITHUB_REF_NAME" != "v$version" ]]; then
+if [[ "${GITHUB_REF_TYPE:-}" == "tag" && "${GITHUB_REF_NAME:-}" != "v$version" ]]; then
   echo 'Release tag must match VERSION.' >&2
   exit 1
 fi

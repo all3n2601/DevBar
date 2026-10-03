@@ -102,6 +102,29 @@ final class DevBarCoreTests: XCTestCase {
         XCTAssertEqual(call.last, "'demo://open?name=O'\\''Brian&value=$(touch /tmp/pwned)'")
     }
 
+    func testPreferencesKeepTypesAndUnrelatedKeys() throws {
+        let original: [String: Any] = ["enabled": true, "count": 7, "name": "Allen", "other": ["keep": "this"]]
+        let data = try PropertyListSerialization.data(fromPropertyList: original, format: .binary, options: 0)
+        let updated = try PreferencesEditor.propertyList(data, key: "count", value: "8")
+        let dict = try PropertyListSerialization.propertyList(from: updated, format: nil) as! [String: Any]
+        XCTAssertEqual(dict["count"] as? Int, 8)
+        XCTAssertEqual(dict["enabled"] as? Bool, true)
+        XCTAssertEqual(dict["other"] as? [String: String], ["keep": "this"])
+        XCTAssertThrowsError(try PreferencesEditor.propertyList(data, key: "enabled", value: "maybe"))
+        XCTAssertThrowsError(try PreferencesEditor.propertyList(data, key: "other", value: "overwrite"))
+        XCTAssertThrowsError(try PreferencesEditor.validateBundleID("../../escape"))
+    }
+
+    func testXMLPreferencesEditOneKeyAndEscapeSpecialCharacters() throws {
+        let data = Data(#"<map><string name="name">old</string><int name="count" value="7"/><boolean name="enabled" value="true"/></map>"#.utf8)
+        let updated = try PreferencesEditor.androidXML(data, key: "name", value: "A & <B>")
+        let document = try XMLDocument(data: updated)
+        XCTAssertEqual(try document.nodes(forXPath: "/map/string[@name='name']").first?.stringValue, "A & <B>")
+        XCTAssertEqual(try document.nodes(forXPath: "/map/int[@name='count']/@value").first?.stringValue, "7")
+        XCTAssertThrowsError(try PreferencesEditor.androidXML(data, key: "count", value: "not a number"))
+        XCTAssertThrowsError(try PreferencesEditor.androidXML(Data("<!DOCTYPE map><map/>".utf8), key: "a", value: "b"))
+    }
+
     private func rpc(_ text: String) -> [String: Any]? { MCPServer().response(to: Data(text.utf8)) }
 
     func testMCPProtocolAndNotifications() {

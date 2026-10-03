@@ -20,8 +20,6 @@ jobs:
         run: python3 scripts/smoke-test.py "$(swift build --show-bin-path)/DevBar"
       - name: Build and verify universal release packages
         run: scripts/package-release.sh
-        env:
-          GITHUB_REF_NAME: ''
       - uses: actions/upload-artifact@v4
         with:
           name: macos-universal

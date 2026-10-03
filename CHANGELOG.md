@@ -12,8 +12,9 @@ First public beta.
 - Portable configuration and screenshot paths; corrected iOS screenshot and GPS command arguments.
 - Persistent favorites and device ID copying; visible GUI boot/shutdown errors; tool diagnostics and targeted app launch/deep-link controls.
 - Physical Android safeguards, simulator-only iOS builds, explicit Android FCM limitation, and bounded recording stop.
+- Erase confirmation; preference edits preserve unrelated keys and value types, reject path traversal, and never overwrite after a failed read.
 - Regression tests, executable smoke checks, universal macOS app/CLI packaging, checksums, and GitHub CI/release workflows.
 
 Known limitations: unnotarized app, hardware validation still required, experimental private storage editing, and Android recording duration limits. See README.
 
-Validation: 14 regression tests, CLI/MCP executable smoke checks, universal package/signature checks, and a local iOS 26.5 simulator run covering boot, Settings app launch, deep link, GPS, PNG capture, and shutdown. Physical Android and Intel execution remain unverified. Automated GUI inspection was unavailable in the development environment.
+Validation: 16 regression tests, CLI/MCP executable smoke checks, universal package/signature checks, and a local iOS 26.5 simulator run covering boot, Settings app launch, deep link, GPS, PNG capture, and shutdown. Physical Android and Intel execution remain unverified. Automated GUI inspection was unavailable in the development environment.
